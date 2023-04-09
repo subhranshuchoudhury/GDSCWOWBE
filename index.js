@@ -4,7 +4,6 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const mailer = require("nodemailer");
-const PORT = process.env.PORT || 3000;
 
 app.use((req, res, next) => {
   res.header({ "Access-Control-Allow-Origin": "*" });
@@ -181,6 +180,7 @@ app.get("/bloodreceiver", (req, res) => {
     });
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server Active on PORT 3000");
 });
