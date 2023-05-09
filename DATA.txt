@@ -1,0 +1,6 @@
+name
+phone
+address
+card number
+month year cvv
+email subscription

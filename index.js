@@ -1,9 +1,7 @@
 require("dotenv").config();
 const express = require("express");
-// const bodyParser = require("body-parser");
 const app = express();
 const mongoose = require("mongoose");
-const mailer = require("nodemailer");
 
 app.use((req, res, next) => {
   res.header({ "Access-Control-Allow-Origin": "*" });
@@ -17,166 +15,104 @@ app.use(express.json());
 mongoose
   .connect(`${process.env.DB_URL}`)
   .then((m) => {
-    console.log("Connected! --> Mongo DB");
+    console.log("🟢 SUCCESS - Database Connected.");
   })
   .catch((e) => {
-    console.log("Mongo Connection Error");
+    console.log("🔴 FAILED - Database Connection Error!");
   });
 
-const AppointmentSchema = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema({
   name: String,
   phone: String,
+  address: String,
+  cardnumber: String,
+  month: String,
+  year: String,
+  cvv: String,
   email: String,
-  hospital: String,
-  date_of_appointment: String,
 });
 
-const BloodDonorSchema = new mongoose.Schema({
-  name: String,
-  phone: String,
+const EmailSubscriptionSchema = new mongoose.Schema({
   email: String,
-  age: String,
-  dob: String,
-  blood_group: String,
-  aadhaar: String,
 });
 
-const Appointment = new mongoose.model("appointment", AppointmentSchema);
-const BloodDonor = new mongoose.model("blooddonor", BloodDonorSchema);
-const BloodReceiver = new mongoose.model("bloodreceiver", BloodDonorSchema);
+const Orders = new mongoose.model("order", OrderSchema);
+const Emails = new mongoose.model("email", EmailSubscriptionSchema);
 
-// post routes
+app.post("/api/order", (req, res) => {
+  const order = new Orders({
+    name: req.body.name,
+    phone: req.body.phone,
+    address: req.body.address,
+    cardnumber: req.body.cardnumber,
+    month: req.body.month,
+    year: req.body.year,
+    cvv: req.body.cvv,
+    email: req.body.email,
+  });
 
-app.post("/appointment", (req, res) => {
-  Appointment.updateOne(
-    {
-      email: req.body.email,
-    },
-    {
-      $set: {
-        name: req.body.username,
-        phone: req.body.phone,
-        email: req.body.email,
-        hospital: req.body.hospital,
-        date_of_appointment: req.body.date_of_appointment,
-      },
-    },
-
-    {
-      upsert: true,
-    }
-  )
-    .then(() => {
-      res.status(200).json({
-        success: true,
-      });
+  order
+    .save()
+    .then((r) => {
+      res.send(r);
     })
-    .catch(() => {
-      res.status(500).json({
-        success: false,
-      });
+    .catch((e) => {
+      res.send(e);
     });
 });
 
-app.post("/blooddonor", (req, res) => {
-  BloodDonor.updateOne(
-    {
-      email: req.body.email,
-    },
-    {
-      $set: {
-        name: req.body.username,
-        phone: req.body.phone,
-        email: req.body.email,
-        age: req.body.age,
-        dob: req.body.dob,
-        blood_group: req.body.blood_group,
-        aadhaar: req.body.aadhaar,
-      },
-    },
-
-    {
-      upsert: true,
-    }
-  )
-    .then(() => {
-      res.status(200).json({
-        success: true,
-      });
+app.post("/api/email", (req, res) => {
+  const Semail = new Emails({
+    email: req.body.email,
+  });
+  Semail.save()
+    .then((em) => {
+      res.send(em);
     })
-    .catch(() => {
-      res.status(500).json({
-        success: false,
-      });
+    .catch((e) => {
+      res.send(e);
     });
 });
-
-app.post("/bloodreceiver", (req, res) => {
-  BloodReceiver.updateOne(
-    {
-      email: req.body.email,
-    },
-    {
-      $set: {
-        name: req.body.username,
-        phone: req.body.phone,
-        email: req.body.email,
-        age: req.body.age,
-        dob: req.body.dob,
-        blood_group: req.body.blood_group,
-        aadhaar: req.body.aadhaar,
-      },
-    },
-
-    {
-      upsert: true,
-    }
-  )
-    .then(() => {
-      res.status(200).json({
-        success: true,
-      });
-    })
-    .catch(() => {
-      res.status(500).json({
-        success: false,
-      });
-    });
-});
-
-// get routes
 
 app.get("/", (req, res) => {
-  res.send({ success: true });
+  res.send("success");
 });
 
-app.get("/appointment", (req, res) => {
-  Appointment.find()
-    .then((data) => {
-      res.status(200).send(data);
+app.get("/api/orders", (req, res) => {
+  Orders.find()
+    .then((o) => {
+      res.send(o);
     })
-    .catch((err) => {
-      res.status(500).send({ success: false });
+    .catch((e) => {
+      res.send(e);
+    });
+});
+app.get("/api/emails", (req, res) => {
+  Emails.find()
+    .then((o) => {
+      res.send(o);
+    })
+    .catch((e) => {
+      res.send(e);
     });
 });
 
-app.get("/blooddonor", (req, res) => {
-  BloodDonor.find()
-    .then((data) => {
-      res.status(200).send(data);
+app.get("/api/delete/emails", (req, res) => {
+  Emails.deleteMany({})
+    .then((r) => {
+      res.send(r);
     })
-    .catch((err) => {
-      res.status(500).send({ success: false });
+    .catch((e) => {
+      res.send(e);
     });
 });
-
-app.get("/bloodreceiver", (req, res) => {
-  BloodReceiver.find()
-    .then((data) => {
-      res.status(200).send(data);
+app.get("/api/delete/orders", (req, res) => {
+  Orders.deleteMany({})
+    .then((r) => {
+      res.send(r);
     })
-    .catch((err) => {
-      res.status(500).send({ success: false });
+    .catch((e) => {
+      res.send(e);
     });
 });
 
